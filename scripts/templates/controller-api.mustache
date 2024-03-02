@@ -1,5 +1,5 @@
 {{>partial_header}}
- package {{packageName}}
+package {{packageName}}
 
 {{#operations}}
 import (
@@ -19,13 +19,6 @@ type {{classname}} interface {
    {{nickname}}(ctx *gin.Context)
 
    {{/operation}}
- }
-
-...
-{{#operations}}
-  ...
-type {{classname}} interface {
-  ...
 }
 
 // partial implementation of {{classname}} - all functions must be implemented in add on files
@@ -51,5 +44,6 @@ func (this *impl{{classname}}) addRoutes(routerGroup *gin.RouterGroup) {
 //  	ctx.AbortWithStatus(http.StatusNotImplemented)
 // }
 //
-
 {{/operation}}
+
+{{/operations}}

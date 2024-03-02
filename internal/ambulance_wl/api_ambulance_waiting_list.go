@@ -11,16 +11,38 @@
 package ambulance_wl
 
 import (
-	"github.com/gin-gonic/gin"
+   "net/http"
+
+   "github.com/gin-gonic/gin"
 )
 
-type AmbulanceWaitingListAPI struct {
+type AmbulanceWaitingListAPI interface {
+
+   // internal registration of api routes
+   addRoutes(routerGroup *gin.RouterGroup)
+
+    // GetWaitingListEntries - Provides the ambulance waiting list
+   GetWaitingListEntries(ctx *gin.Context)
+
 }
 
-// Get /api/waiting-list/:ambulanceId/entries
-// Provides the ambulance waiting list 
-func (api *AmbulanceWaitingListAPI) GetWaitingListEntries(c *gin.Context) {
-	// Your handler implementation
-	c.JSON(200, gin.H{"status": "OK"})
+// partial implementation of AmbulanceWaitingListAPI - all functions must be implemented in add on files
+type implAmbulanceWaitingListAPI struct {
+
 }
+
+func newAmbulanceWaitingListAPI() AmbulanceWaitingListAPI {
+  return &implAmbulanceWaitingListAPI{}
+}
+
+func (this *implAmbulanceWaitingListAPI) addRoutes(routerGroup *gin.RouterGroup) {
+  routerGroup.Handle( http.MethodGet, "/waiting-list/:ambulanceId/entries", this.GetWaitingListEntries)
+}
+
+// Copy following section to separate file, uncomment, and implement accordingly
+// // GetWaitingListEntries - Provides the ambulance waiting list
+// func (this *implAmbulanceWaitingListAPI) GetWaitingListEntries(ctx *gin.Context) {
+//  	ctx.AbortWithStatus(http.StatusNotImplemented)
+// }
+//
 
