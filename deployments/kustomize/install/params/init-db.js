@@ -11,7 +11,7 @@ const retrySeconds = parseInt(process.env.RETRY_CONNECTION_SECONDS || "5") || 5;
 
 // try to connect to mongoDB until it is not available
 let connection;
-while(true) {
+while (true) {
     try {
         connection = Mongo(`mongodb://${mongoUser}:${mongoPassword}@${mongoHost}:${mongoPort}`);
         break;
@@ -28,7 +28,7 @@ if (databases.includes(database)) {
     const dbInstance = connection.getDB(database)
     collections = dbInstance.getCollectionNames()
     if (collections.includes(collection)) {
-       print(`Collection '${collection}' already exists in database '${database}'`)
+        print(`Collection '${collection}' already exists in database '${database}'`)
         process.exit(0);
     }
 }
