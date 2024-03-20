@@ -114,8 +114,8 @@ spec:
               value: "5"
           resources:
             requests:
-              memory: "16Mi"
+              memory: "128Mi"
               cpu: "0.01"
             limits:
-              memory: "64Mi"
+              memory: "256Mi"
               cpu: "0.1"
