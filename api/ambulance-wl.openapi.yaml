@@ -1,7 +1,7 @@
 openapi: 3.0.0
 servers:
   - description: Cluster Endpoint
-    url: /api
+    url: /mhx-api
 info:
   description: Ambulance Waiting List management for Web-In-Cloud system
   version: "1.0.0"
