@@ -7,20 +7,30 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 type implAmbulanceWaitingListAPI struct {
+	logger zerolog.Logger
 }
 
 func NewAmbulanceWaitingListApi() AmbulanceWaitingListAPI {
-	return &implAmbulanceWaitingListAPI{}
+	return &implAmbulanceWaitingListAPI{logger: log.With().Str("component", "ambulance-wl").Logger()}
 }
 
 func (o implAmbulanceWaitingListAPI) CreateWaitingListEntry(c *gin.Context) {
 	updateAmbulanceFunc(c, func(c *gin.Context, ambulance *Ambulance) (*Ambulance, interface{}, int) {
+		logger := o.logger.With().
+			Str("method", "CreateWaitingListEntry").
+			Str("ambulanceId", ambulance.Id).
+			Str("ambulanceName", ambulance.Name).
+			Logger()
+
 		var entry WaitingListEntry
 
 		if err := c.ShouldBindJSON(&entry); err != nil {
+			logger.Error().Err(err).Msg("Failed to bind JSON")
 			return nil, gin.H{
 				"status":  http.StatusBadRequest,
 				"message": "Invalid request body",
@@ -29,6 +39,8 @@ func (o implAmbulanceWaitingListAPI) CreateWaitingListEntry(c *gin.Context) {
 		}
 
 		if entry.PatientId == "" {
+			logger.Error().Msg("Patient ID is required")
+			logger.Trace().Msgf("Entry: %+v", entry)
 			return nil, gin.H{
 				"status":  http.StatusBadRequest,
 				"message": "Patient ID is required",
@@ -37,6 +49,9 @@ func (o implAmbulanceWaitingListAPI) CreateWaitingListEntry(c *gin.Context) {
 
 		if entry.Id == "" || entry.Id == "@new" {
 			entry.Id = uuid.NewString()
+			logger.Debug().
+				Str("entry-id", entry.Id).
+				Msg("Generating new ID for entry")
 		}
 
 		conflictIndx := slices.IndexFunc(ambulance.WaitingList, func(waiting WaitingListEntry) bool {
@@ -44,6 +59,7 @@ func (o implAmbulanceWaitingListAPI) CreateWaitingListEntry(c *gin.Context) {
 		})
 
 		if conflictIndx >= 0 {
+			logger.Error().Msg("Entry already exists")
 			return nil, gin.H{
 				"status":  http.StatusConflict,
 				"message": "Entry already exists",
@@ -62,15 +78,26 @@ func (o implAmbulanceWaitingListAPI) CreateWaitingListEntry(c *gin.Context) {
 				"message": "Failed to save entry",
 			}, http.StatusInternalServerError
 		}
+
+		logger.Info().
+			Str("entry-id", ambulance.WaitingList[entryIndx].Id).
+			Msg("Succesfully created patient entry")
 		return ambulance, ambulance.WaitingList[entryIndx], http.StatusOK
 	})
 }
 
 func (o implAmbulanceWaitingListAPI) DeleteWaitingListEntry(c *gin.Context) {
 	updateAmbulanceFunc(c, func(c *gin.Context, ambulance *Ambulance) (*Ambulance, interface{}, int) {
+		logger := o.logger.With().
+			Str("method", "DeleteWaitingListEntry").
+			Str("ambulanceId", ambulance.Id).
+			Str("ambulanceName", ambulance.Name).
+			Logger()
+
 		entryId := c.Param("entryId")
 
 		if entryId == "" {
+			logger.Error().Msg("Entry ID is required")
 			return nil, gin.H{
 				"status":  http.StatusBadRequest,
 				"message": "Entry ID is required",
@@ -82,6 +109,7 @@ func (o implAmbulanceWaitingListAPI) DeleteWaitingListEntry(c *gin.Context) {
 		})
 
 		if entryIndx < 0 {
+			logger.Error().Msg("Entry not found")
 			return nil, gin.H{
 				"status":  http.StatusNotFound,
 				"message": "Entry not found",
@@ -107,9 +135,16 @@ func (o implAmbulanceWaitingListAPI) GetWaitingListEntries(c *gin.Context) {
 
 func (o implAmbulanceWaitingListAPI) GetWaitingListEntry(c *gin.Context) {
 	updateAmbulanceFunc(c, func(c *gin.Context, ambulance *Ambulance) (*Ambulance, interface{}, int) {
+		logger := o.logger.With().
+			Str("method", "GetWaitingListEntry").
+			Str("ambulanceId", ambulance.Id).
+			Str("ambulanceName", ambulance.Name).
+			Logger()
+
 		entryId := c.Param("entryId")
 
 		if entryId == "" {
+			logger.Error().Msg("Entry ID is required")
 			return nil, gin.H{
 				"status":  http.StatusBadRequest,
 				"message": "Entry ID is required",
@@ -137,6 +172,13 @@ func (o implAmbulanceWaitingListAPI) UpdateWaitingListEntry(c *gin.Context) {
 		var entry WaitingListEntry
 
 		if err := c.ShouldBindJSON(&entry); err != nil {
+			logger := o.logger.With().
+				Str("method", "UpdateWaitingListEntry").
+				Str("ambulanceId", ambulance.Id).
+				Str("ambulanceName", ambulance.Name).
+				Logger()
+			logger.Error().Err(err).Msg("Failed to bind JSON")
+
 			return nil, gin.H{
 				"status":  http.StatusBadRequest,
 				"message": "Invalid request body",
@@ -147,6 +189,12 @@ func (o implAmbulanceWaitingListAPI) UpdateWaitingListEntry(c *gin.Context) {
 		entryId := c.Param("entryId")
 
 		if entryId == "" {
+			logger := o.logger.With().
+				Str("method", "UpdateWaitingListEntry").
+				Str("ambulanceId", ambulance.Id).
+				Str("ambulanceName", ambulance.Name).
+				Logger()
+			logger.Error().Msg("Entry ID is required")
 			return nil, gin.H{
 				"status":  http.StatusBadRequest,
 				"message": "Entry ID is required",
